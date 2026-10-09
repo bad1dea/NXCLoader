@@ -135,7 +135,27 @@ The menu is a tree of folders and rows. Each row carries a program: read or writ
 
 ## Making packs
 
-Designer is a browser editor for packs, with a guide to writing one. Not released yet.
+Designer is a browser editor for packs. Not released yet, and a guide to writing a pack will come with it. These screenshots show the South Park: Snow Day! project open in it.
+
+The control list on the left, the pack's menu in the middle and the selected control's properties on the right. Each control has a label, a kind (toggle, dropdown, number, slider, readout, button), a folder, and the behavior that runs when it changes.
+
+<img src="images/designer-controls.png" width="800">
+
+A dropdown row, with its option list and what switching it Off does.
+
+<img src="images/designer-dropdown.png" width="800">
+
+Player preview draws the pack as the overlay would, with the same rows and folders.
+
+<img src="images/designer-player-preview.png" width="800">
+
+Behaviors are built from blocks (write, freeze, compare, loop, call) or written as script.
+
+<img src="images/designer-behavior-blocks.png" width="800">
+
+Examples walks through common cases, such as freezing a value or hooking an instruction, with the finished behavior for each.
+
+<img src="images/designer-examples.png" width="800">
 
 ## Releases
 
