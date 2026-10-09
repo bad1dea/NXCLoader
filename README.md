@@ -149,13 +149,92 @@ Player preview draws the pack as the overlay would, with the same rows and folde
 
 <img src="images/designer-player-preview.png" width="800">
 
-Behaviors are built from blocks (write, freeze, compare, loop, call) or written as script.
+Behaviors are built from blocks (write, freeze, compare, loop, call) or written as script. The next section shows one in both forms.
 
 <img src="images/designer-behavior-blocks.png" width="800">
 
 Examples walks through common cases, such as freezing a value or hooking an instruction, with the finished behavior for each.
 
 <img src="images/designer-examples.png" width="800">
+
+## What a behavior looks like
+
+A plain row is one line of script. This freezes a value (the address is an example):
+
+```
+freeze u32[main+0x4a1b20] = 999
+```
+
+Godmode in the Snow Day pack is not a value. It hooks the game's apply-damage function and decides per hit. Here it is in Designer as blocks: each block writes one word of the cave into the game, and the cave's assembly is shown on it.
+
+<img src="images/designer-blocks-godmode.png" width="800">
+
+The same behavior as script. Each line is a write; the last two patch the hook (`main+0x1772550` becomes a branch to the cave) and set the row's flag word.
+
+<img src="images/designer-script-godmode.png" width="800">
+
+The cave itself, as written in the pack's generator. `X9` points at a small table of words in the cave arena. Master code refreshes it every poll with the player's body pointer and team, and each row writes its own flag word there, so switching Godmode off is one store and the hook stays harmless.
+
+```asm
+    ; hooked at main+0x1772550, replacing STP X29, X30, [SP, #-0x30]!
+        adr  X9, table
+        LDR  X10, [X9, #BODY]          ; player's body
+        LDR  X11, [X0, #0xF8]          ; body this hit lands on
+        LDR  W12, [X9, #god]           ; Godmode flag word
+        CBZ  W12, team
+        CMP  X10, X11
+        B.EQ skip                      ; the player is hit: drop it
+    team:
+        LDR  W12, [X9, #teamgod]       ; Team Godmode flag word
+        CBZ  W12, run
+        CBZ  X11, run
+        MOV  X16, X9
+        MOV  X17, X11
+        MOV  X9, X30
+        BL   side                      ; friend or foe, below
+        MOV  X30, X9
+        CMP  W17, #2
+        B.EQ skip                      ; on the player's side: drop it
+    run:
+        STP  X29, X30, [SP, #-0x30]!   ; the instruction the hook replaced
+        B    back                      ; continue in the game
+    skip:
+        RET
+```
+
+Friend or foe is a helper that other rows call, so Damage multipliers and AI Speed only touch enemies. It checks the body's vtable, then walks the body's team's enemy list for the player's team class. W17 comes back 0 for not a body, 1 for an enemy, 2 for anyone else on the player's side.
+
+```asm
+        LDR  X3, [X17]
+        adr  X4, BODY_VTABLE
+        CMP  X3, X4
+        B.NE none                      ; not a body at all
+        LDR  X3, [X17, #PAWN_TEAM]
+        LDR  X4, [X16, #TEAM]          ; player's team
+        CBZ  X3, ours
+        CBZ  X4, ours
+        CMP  X3, X4
+        B.EQ ours                      ; same team object
+        LDR  X4, [X4, #0x10]           ; player's team class
+        LDR  X5, [X3, #ENEMY_TEAMS]    ; this team's enemy list
+        LDRSW X6, [X3, #ENEMY_TEAMS+8] ; and its count
+    scan:
+        CBZ  X6, ours
+        SUB  X6, X6, #1
+        LDR  X12, [X5, X6, LSL #3]
+        CMP  X12, X4
+        B.NE scan
+        MOV  W17, #1                   ; the player's class is in its enemy list
+        RET
+    ours:
+        MOV  W17, #2
+        RET
+    none:
+        MOV  W17, #0
+        RET
+```
+
+Caves are assembled by the pack's generator and checked by running them in an emulator before they ship, with the flag word on and off, so a cave that changes anything with its word off fails the build.
 
 ## Releases
 
