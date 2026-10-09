@@ -139,6 +139,8 @@ The menu is a tree of folders and rows, and each row carries a program: read or 
 
 Designer is a browser editor for packs, and a guide to writing them comes with it. It's not out yet. Here's the Snow Day project open in it.
 
+You can also drop in your Atmosphere `.txt` cheats and Designer converts them into a pack: the cheat codes become rows, and sets of cheats that only differ by a number (2x, 5x, 10x) fold into one dropdown.
+
 Controls on the left, the pack's menu in the middle, and the selected control's settings on the right. Every control has a label, a kind (toggle, dropdown, number, slider, readout, button), a folder, and the behavior that runs when it changes.
 
 <img src="images/designer-controls.png" width="800">
